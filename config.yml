@@ -1,0 +1,8 @@
+Retry: True
+Mode: 1
+
+Database:
+  Local:
+    Location: 'backend/database.db'
+  Remote:
+    Driver:

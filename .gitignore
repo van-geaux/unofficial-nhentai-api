@@ -156,10 +156,12 @@ cython_debug/
 /temp*
 /src*
 
-config.yml
 *ipynb
 
 main.py
 media.py
 database.db
 database_merged.db
+*dockerfile*
+requirements.txt
+entrypoint.sh
