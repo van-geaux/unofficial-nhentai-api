@@ -6,6 +6,11 @@ Welcome to the **unofficial** NHentai database—a project I made out of boredom
 
 ---
 
+## 🐂 Short Description
+This database provides structured NHentai metadata, including titles, artist names, categories, and tags. It is updated daily, offering a snapshot of the available content as of the previous day.
+
+---
+
 ## 📂 Contents
 📁 CSV files are available in the `by_month` folder.
 
@@ -18,9 +23,26 @@ Welcome to the **unofficial** NHentai database—a project I made out of boredom
 ## 📊 Data Coverage
 🚀 Scraping began in **28 February 2025**, meaning older purged content is **not included**.
 
-📥 If you have missing data:
+📥 If you have the missing data:
 - Please **open an issue** or submit a **pull request**, and I'll add it.
 - If you find incorrect data, report it by opening an issue.
+
+---
+
+## 📝 Available Fields
+- **ID**: NHentai identifier  
+- **EN_TITLE**: English title  
+- **JP_TITLE**: Japanese title  
+- **CLEAN_TITLE**: Clean English title  
+- **LANGUAGE**: Language of the content  
+- **ARTIST**: Artist(s) involved  
+- **GROUP_NAME**: Doujinshi circle or group  
+- **CATEGORY**: Main category (e.g., Doujinshi, Manga)  
+- **PARODY**: Parodied works  
+- **CHARACTER**: Characters featured  
+- **TAGS**: Associated tags  
+- **PAGES**: Number of pages  
+- **UPLOAD_DATE**: Date of upload  
 
 ---
 
