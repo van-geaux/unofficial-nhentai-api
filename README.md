@@ -100,21 +100,21 @@ GET /search?parody=evangelion&character=ritsuko&artist=someartist&tags=mature&li
 **Example Response:**
 ```json
 {
-  "items": [
-    {
-      "ID": 123456,
-      "EN_TITLE": "Example Title",
-      "CATEGORY": "Manga",
-      "PARODY": "Evangelion",
-      "CHARACTER": "Ritsuko",
-      "ARTIST": "SomeArtist",
-      "TAGS": "mature, sci-fi",
-      "PAGES": 32,
-      "UPLOAD_DATE": "2025-03-01"
-    }
-  ],
-  "limit": 10,
-  "offset": 0
+    "ID": 123456,
+    "EN_TITLE": "[Example Artist] Example Title Ch. 1-3 [English]",
+    "JP_TITLE": "[サンプル作家] サンプルタイトル 第1-3話 [英訳]",
+    "CLEAN_TITLE": "Example Title Ch. 1-3",
+    "LANGUAGE": "english, translated",
+    "ARTIST": "example artist",
+    "GROUP_NAME": "example group",
+    "CATEGORY": "example category",
+    "PARODY": "example parody",
+    "CHARACTER": "example character 1, example character 2",
+    "TAGS": "example tag 1, example tag 2, example tag 3, example tag 4",
+    "PAGES": 99,
+    "UPLOAD_DATE": 1609459200,
+    "FORMATTED_DATE": "2021-01-01 00:00:00",
+    "SCRAPED_DATE": "2025-03-01 22:25:18"
 }
 ```
 
