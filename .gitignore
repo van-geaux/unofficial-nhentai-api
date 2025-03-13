@@ -155,6 +155,7 @@ cython_debug/
 /logs*
 /temp*
 /src*
+/recovery*
 
 *ipynb
 
@@ -166,3 +167,4 @@ requirements.txt
 entrypoint.sh
 config.yml
 dockerfile
+recover_404.py
