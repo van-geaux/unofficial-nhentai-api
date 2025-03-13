@@ -168,3 +168,4 @@ entrypoint.sh
 config.yml
 dockerfile
 recover_404.py
+*.fuse_*
