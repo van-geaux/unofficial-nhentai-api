@@ -21,11 +21,16 @@ This database provides structured NHentai metadata, including titles, artist nam
 ---
 
 ## 📊 Data Coverage
-🚀 Scraping began in **28 February 2025**, meaning older purged content is **not included**.
+🚀 Scraping began on **28 February 2025**, meaning older purged content is **not included**.
 
 📥 If you have the missing data:
 - Please **open an issue** or submit a **pull request**, and I'll add it.
 - If you find incorrect data, report it by opening an issue.
+
+📝 **Wayback Machine Data:**
+- For missing content from the purge, I have supplemented the database using **Wayback Machine** data where available.
+- However, these entries are **often missing the upload date**.
+- As such, they **won't appear in the monthly CSV** exports. You will need the **SQLite database** to access the complete data.
 
 ---
 
