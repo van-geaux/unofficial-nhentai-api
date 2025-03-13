@@ -11,9 +11,19 @@ This API provides structured NHentai metadata, including titles, artist names, c
 
 ---
 
+## 💂 Notice
+NHentai has an API that can be accessed at:
+```
+https://nhentai.net/api/gallery/{id}
+```
+
+This project is more about my **learning of APIs** and **preservation of data**, so people won’t lose the data of their favorite ID due to purges.
+
+---
+
 ## 📂 Database & CSV
 - 📁 CSV files are available in the `by_month` folder.
-- 🗄️ To get the SQLite database:
+- 🏢 To get the SQLite database:
   1. Run `merge_database.py` to combine the split parts.
   2. The merged database, `database_merged.db`, will be available in the `backend` folder.
 
@@ -22,7 +32,7 @@ This API provides structured NHentai metadata, including titles, artist names, c
 ## 📊 Data Coverage
 🚀 Scraping began on **28 February 2025**, meaning older purged content is **not included**.
 
-📥 If you have the missing data:
+💞 If you have the missing data:
 - Please **open an issue** or submit a **pull request**, and I'll add it.
 - If you find incorrect data, report it by opening an issue.
 
@@ -50,7 +60,7 @@ This API provides structured NHentai metadata, including titles, artist names, c
 
 ---
 
-## 📡 API Documentation
+## 👀 API Documentation
 Base URL: `https://nhapi.geaux.id`
 
 ### 🔍 Search & Filter Endpoints
