@@ -82,8 +82,11 @@ GET /search?parody=evangelion&character=ritsuko&artist=someartist&tags=mature&li
 ```
 
 **Query Parameters:**
+- `title` (optional) - Filter by title
+- `language` (optional) - Filter by language
 - `parody` (optional) - Filter by parody title
 - `character` (optional) - Filter by character name
+- `group` (optional) - Filter by group name
 - `artist` (optional) - Filter by artist name
 - `tags` (optional) - Filter by tags (comma-separated)
 - `limit` (optional) - Number of results per request (default: 10, max: 100)
