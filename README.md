@@ -64,24 +64,6 @@ GET /id/{item_id}
 ```http
 GET /id/123456
 ```
-**Response:**
-```json
-{
-  "ID": 123456,
-  "EN_TITLE": "Example Title",
-  "JP_TITLE": "サンプルタイトル",
-  "CLEAN_TITLE": "Example Title",
-  "LANGUAGE": "English",
-  "ARTIST": "Artist Name",
-  "GROUP_NAME": "Doujin Group",
-  "CATEGORY": "Manga",
-  "PARODY": "Parody Name",
-  "CHARACTER": "Character Name",
-  "TAGS": "tag1, tag2, tag3",
-  "PAGES": 32,
-  "UPLOAD_DATE": "2025-03-01"
-}
-```
 
 #### Search by Filters
 You can apply multiple filters using query parameters:
