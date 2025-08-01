@@ -1,0 +1,210 @@
+from alive_progress import alive_bar
+from src.config import get_config
+from src.database import db_create, db_insert, db_read
+from bs4 import BeautifulSoup
+import os
+import re
+import requests
+import sqlite3
+import sys
+import time
+import xml.etree.ElementTree as ET
+import zipfile
+from datetime import datetime
+from io import BytesIO
+from PIL import Image, ImageFile
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s - %(levelname)s - %(message)s",
+                    datefmt="%Y-%m-%d %H:%M:%S")
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True  
+
+def sanitize_filename(filename, max_length=250):
+    filename = filename.replace(": ", " - ").replace(":", "-").replace("/", "-").replace("\\", "-")
+    filename = filename.replace("*", "-").replace("?", "").replace('"', "")
+    filename = filename.replace("<", "-").replace(">", "-").replace("|", "-")
+    filename = filename.rstrip('.')
+
+    if len(filename) > max_length:
+        filename = filename[:max_length].rstrip()
+
+    return filename
+
+def clear_temp():
+    """Delete all files in the temporary directory."""
+    for file in os.listdir(TEMP_DIR):
+        file_path = os.path.join(TEMP_DIR, file)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+def create_comicinfo_xml(metadata, output_path):
+    """Generate ComicInfo.xml based on the metadata and save it."""
+    comic_info = ET.Element("ComicInfo")
+
+    dt = datetime.fromtimestamp(metadata.get("UPLOAD_DATE", ""))
+    year, month, day = dt.year, dt.month, dt.day
+    
+    fields = {
+        "Title": metadata.get("EN_TITLE", ""),
+        "Writer": metadata.get("ARTIST", ""),
+        "Publisher": metadata.get("GROUP_NAME", ""),
+        "Genre": metadata.get("CATEGORY", ""),
+        "Characters": metadata.get("CHARACTER", ""),
+        "Tags": metadata.get("TAGS", ""),
+        "LanguageISO": metadata.get("LANGUAGE", ""),
+        "Year": str(year),
+        "Month": str(month),
+        "Day": str(day),
+        "Summary": f"Parody: {metadata.get('PARODY', '')}\nUploaded: {metadata.get('FORMATTED_DATE', '')}"
+    }
+
+    for key, value in fields.items():
+        elem = ET.SubElement(comic_info, key)
+        elem.text = value
+
+    tree = ET.ElementTree(comic_info)
+    tree.write(output_path, encoding="utf-8", xml_declaration=True)
+
+config = get_config('config.yml')
+
+table_name = 'nh_data'
+db_location = config['Database']['Local'].get('Location')
+
+MAX_RETRIES = 5
+TEMP_DIR = 'temp'
+TARGET_DIR = '/mnt/remotes/SYNOLOGY_data/media/books/nhentai/english'
+
+query = f"SELECT * FROM {table_name} WHERE LANGUAGE LIKE '%nglish%' AND TAGS NOT LIKE '%yaoi%'"
+try:
+    with sqlite3.connect(db_location) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        cursor.execute(query)
+        results = [dict(row) for row in cursor.fetchall()]
+except Exception as e:
+    logging.error(e)
+
+existing_files = []
+pattern = re.compile(r"^\((\d+)\)")
+for root, _, files in os.walk(TARGET_DIR):
+    for filename in files:
+        match = pattern.match(filename)
+        if match:
+            existing_files.append(int(match.group(1)))
+
+missing_ids = sorted(set([item["ID"] for item in results]) - set(existing_files))
+last_id = max(existing_files)
+
+try:
+    consecutive_fails = 0
+    with alive_bar(enrich_print=False) as bar:
+        for nh_id in results:
+            clear_temp()
+
+            if nh_id.get('ID') <= last_id:
+                bar()
+                continue
+
+            if nh_id.get('ID') not in missing_ids:
+                bar()
+                continue
+
+            output_cbz = sanitize_filename(f'({nh_id.get("ID")}) {nh_id.get("EN_TITLE")}.cbz')
+            root = requests.get(f"https://nhentai.net/g/{nh_id.get('ID')}")
+
+            if root.status_code == 200:
+                consecutive_fails = 0
+            elif root.status_code == 404:
+                consecutive_fails = 0
+                logging.info(f'Skipping {nh_id.get("ID")} due code: {root.status_code}')
+                print('')
+                bar()
+                continue
+            else:
+                consecutive_fails += 1
+                logging.error(f"Request failed for {nh_id.get('ID')} ({root.status_code}) - Consecutive fails: {consecutive_fails}")
+                time.sleep(3600)
+                if consecutive_fails >= MAX_RETRIES:
+                    logging.error("Max consecutive failures reached. Exiting.")
+                    clear_temp()
+                    sys.exit(1)
+
+            soup = BeautifulSoup(root.text, 'html.parser')
+            img_urls = [i.get('src') for i in soup.find_all('img', class_=False, alt=False) if 'thumb' not in i.get('src') and 'cover' not in i.get('src')]
+
+            failure_count = 0
+
+            for idx, img_url in enumerate(img_urls):
+                img_url = re.sub(r'//t(\d)\.', r'//i\1.', img_url)
+                img_url = re.sub(r'(\d+)t(\.[a-zA-Z0-9]+)$', r'\1\2', img_url)
+
+                if 'https' not in img_url:
+                    img_url = 'https:'
+                logging.info(img_url)
+
+                for attempt in range(MAX_RETRIES):
+                    try:
+                        img_data = requests.get(img_url, stream=True)
+                        img_data.raise_for_status()  # Raise exception for HTTP errors
+
+                        content_type = img_data.headers.get('Content-Type', '').lower()
+
+                        with Image.open(BytesIO(img_data.content)) as image:
+                            image.load()  # Ensure the image is fully loaded
+
+                            if image.mode == "I;16":
+                                image = image.convert("RGB")  # or "RGB" if you prefer color
+                            elif image.mode in ("P", "RGBA", "LA"):
+                                image = image.convert("RGB")
+
+                            img_path = os.path.join(TEMP_DIR, f"{idx+1:03d}.jpg")
+                            image.save(img_path)
+                        break  # Exit retry loop if successful
+                    
+                    except (requests.RequestException, IOError) as e:
+                        logging.error(f"Error downloading {img_url} (Attempt {attempt+1}/{MAX_RETRIES}): {e}")
+                        if attempt == MAX_RETRIES - 1:
+                            failure_count += 1
+                            time.sleep(3600)
+                
+                if failure_count >= MAX_RETRIES:
+                    logging.error("Failed to download images 5 times in a row. Exiting...")
+                    clear_temp()
+                    sys.exit(1)
+
+            # Create CBZ
+            images = [f for f in os.listdir(TEMP_DIR) if f.lower().endswith('.jpg')]
+
+            if not images:
+                logging.info(f'Skipping {nh_id.get("ID")} because it is empty')
+                print('')
+                clear_temp()
+                bar()
+                continue
+
+            xml_path = os.path.join(TEMP_DIR, "ComicInfo.xml")
+            create_comicinfo_xml(nh_id, xml_path)
+
+            if nh_id.get('GROUP_NAME'):
+                target_path = os.path.join(TARGET_DIR, nh_id.get('GROUP_NAME'))
+            else:
+                target_path = os.path.join(TARGET_DIR, '_nogroup')
+
+            os.makedirs(target_path, exist_ok=True)
+
+            cbz_path = os.path.join(target_path, output_cbz)
+
+            with zipfile.ZipFile(cbz_path, "w", zipfile.ZIP_DEFLATED) as cbz:
+                for image in sorted(images):
+                    img_path = os.path.join(TEMP_DIR, image)
+                    cbz.write(img_path, image)
+                cbz.write(xml_path, "ComicInfo.xml")
+
+            # Cleanup
+            clear_temp()
+            bar()
+
+except Exception as e:
+    logging.error(e)
